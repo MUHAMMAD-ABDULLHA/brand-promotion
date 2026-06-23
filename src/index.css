@@ -1,0 +1,177 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme="dark"] *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  .text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  .text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  .text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  .text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+  .text-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  .text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  .text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  .text-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+  .text-5xl {
+    font-size: 3rem;
+    line-height: 1;
+  }
+  .text-6xl {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+  .text-7xl {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+  .text-8xl {
+    font-size: 6rem;
+    line-height: 1;
+  }
+  .text-9xl {
+    font-size: 8rem;
+    line-height: 1;
+  }
+}
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #f5efeb;
+  --foreground: #202020;
+
+  --card: #ffffff;
+  --card-foreground: #202020;
+
+  --popover: #ffffff;
+  --popover-foreground: #202020;
+
+  --primary: #4e7a51;
+  --primary-foreground: #ffffff;
+
+  --hover: color-mix(in srgb, var(--primary) 90%, black);
+
+  --secondary: #8cb89f;
+  --secondary-foreground: #ffffff;
+
+  --muted: #e2e8e4;
+  --muted-foreground: #4e7a51;
+
+  --accent: #e2e8e4;
+  --accent-foreground: #202020;
+
+  --destructive: #ef4444;
+  --border: #d0d6d1;
+  --input: #d0d6d1;
+  --ring: #4e7a51;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #202020;
+  --sidebar-primary: #4e7a51;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5efeb;
+  --sidebar-accent-foreground: #202020;
+  --sidebar-border: #d0d6d1;
+  --sidebar-ring: #4e7a51;
+}
+
+.dark {
+  --background: #18181b;
+  --foreground: #f5efeb;
+
+  --card: #27272a;
+  --card-foreground: #f5efeb;
+
+  --popover: #27272a;
+  --popover-foreground: #f5efeb;
+
+  --primary: #52aa78;
+  --primary-foreground: #18181b;
+
+  --secondary: #4e7a51;
+  --secondary-foreground: #ffffff;
+
+  --muted: #27272a;
+  --muted-foreground: #65b889;
+
+  --accent: #27272a;
+  --accent-foreground: #ffffff;
+
+  --destructive: #f87171;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #66a883;
+
+  --sidebar: #18181b;
+  --sidebar-foreground: #f5efeb;
+  --sidebar-primary: #80a791;
+  --sidebar-primary-foreground: #18181b;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #679e7f;
+}

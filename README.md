@@ -131,6 +131,8 @@ The platform manages 27 entities across campaign, ad, analytics, social, billing
 
 Key relationships worth noting:
 
+
+-testing
 - A `CombineCampaign` links one base `Campaign` to multiple `CombineCampaignCollaborator` records, each with an `approved` status of `pending`, `approved`, or `rejected`.
 - An `Ad` carries an `EnableAR` flag and an `ARURL` pointing to the uploaded 3D asset. The `mediaType` field is set to `ar` when AR is active.
 - `AdAnalytics` and `PostAnalytics` log discrete events (`impression`, `click`, `engagement`, `like`, `comment`, `share`) tied to a user ID and timestamp, forming the raw data behind every chart and export.

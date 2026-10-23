@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchCombineCampaignsByAdmin,
@@ -186,18 +186,34 @@ const CombineCampaign = ({
 
   // --- API Handlers ---
 
+  // Simple in-memory cache for recommendation results
+  const recCache = useRef(new Map());
+  const REC_CACHE_TTL = 5 * 60 * 1000;
+
   // 1. Fetch Recommendations when Campaign ID changes
   const loadRecommendations = useCallback(
     async (campId) => {
       if (!campId || !userId) return;
+
+      const cacheKey = `${userId}:${campId}`;
+      const cached = recCache.current.get(cacheKey);
+      if (cached && Date.now() - cached.ts < REC_CACHE_TTL) {
+        setRecommendations(cached.data);
+        setTargetNiche(cached.niche || "");
+        return;
+      }
+
       setIsLoadingDiscovery(true);
       try {
         const response = await axios.get(
           `http://localhost:8080/recommendation/collaborators/${userId}?campaign_id=${campId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setRecommendations(response.data.collaborators || []);
-        setTargetNiche(response.data.target_niche || "");
+        const data = response.data.collaborators || [];
+        const niche = response.data.target_niche || "";
+        recCache.current.set(cacheKey, { data, niche, ts: Date.now() });
+        setRecommendations(data);
+        setTargetNiche(niche);
       } catch (error) {
         console.error("Failed to load recommendations", error);
       } finally {

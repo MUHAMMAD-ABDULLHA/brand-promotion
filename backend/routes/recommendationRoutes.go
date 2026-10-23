@@ -1,17 +1,24 @@
 package routes
 
 import (
+	"time"
 	"vite-project/backend/controllers"
+	"vite-project/backend/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RecommendataionRoutes(rg *gin.RouterGroup) {
+	// Rate limit: 30 requests per 60s per IP for recommendation endpoints
+	rl := middlewares.RateLimit(30, 60*time.Second)
+
 	// ---------------------------
 	// Feed Recommendations
 	// ---------------------------
-	rg.GET("/posts/:user_id", controllers.RecommendPosts)
-	rg.GET("/ads/:user_id", controllers.RecommendAds)
+	rg.GET("/posts/:user_id", rl, controllers.RecommendPosts)
+	rg.GET("/posts/qwen/:user_id", rl, controllers.RecommendPostsQwen)
+	rg.GET("/ads/:user_id", rl, controllers.RecommendAds)
+	rg.POST("/feedback", rl, controllers.RecordRecommendationFeedback)
 
 	// ---------------------------
 	// AI Content Tools

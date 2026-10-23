@@ -319,6 +319,9 @@ export const fetchDisplayAds = createAsyncThunk (
         }
       }
       const data = await response.json();
+      if (data && Array.isArray(data.ads)) {
+        return data.ads;
+      }
       return Array.isArray(data) ? data : [data];
     } catch (error) {
       toast.error(error.message, {

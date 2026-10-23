@@ -126,39 +126,127 @@ func RecommendPosts(c *gin.Context) {
 	}
 	log.Printf("INFO: RecommendPosts loaded %d available posts", len(availablePosts))
 
-	// build prompt using ONLY provided attributes
-	prompt := buildPostRecommendationPrompt(user, follows, postActivity, availablePosts)
-	// log.Printf("DEBUG: RecommendPosts generated prompt: %s", prompt) // Log prompt if needed for debugging
+	/*
+		// build prompt using ONLY provided attributes
+		prompt := buildPostRecommendationPrompt(user, follows, postActivity, availablePosts)
+		// log.Printf("DEBUG: RecommendPosts generated prompt: %s", prompt) // Log prompt if needed for debugging
 
-	// call Mistral to get ordered post IDs
-	postIDs, err := callMistralForIDs(prompt, "post_ids")
-	if err != nil {
-		log.Printf("ERROR: RecommendPosts call to Mistral failed for user %d: %v", userId, err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "AI service unavailable",
-			"details": err.Error(),
+		// call Mistral to get ordered post IDs
+		postIDs, err := callMistralForIDs(prompt, "post_ids")
+		if err != nil {
+			log.Printf("ERROR: RecommendPosts call to Mistral failed for user %d: %v", userId, err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "AI service unavailable",
+				"details": err.Error(),
+			})
+			return
+		}
+		log.Printf("INFO: RecommendPosts received %d post IDs from Mistral: %v", len(postIDs), postIDs)
+
+		if len(postIDs) == 0 {
+			log.Printf("INFO: RecommendPosts returning empty list for user %d", userId)
+			c.JSON(http.StatusOK, gin.H{"posts": []models.Post{}})
+			return
+		}
+
+		// fetch posts by IDs in order
+		posts, err := getPostsByIDs(postIDs)
+		if err != nil {
+			log.Printf("ERROR: RecommendPosts failed to fetch recommended posts for user %d: %v", userId, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch recommended posts"})
+			return
+		}
+		log.Printf("INFO: RecommendPosts successfully fetched %d posts for user %d", len(posts), userId)
+
+		c.JSON(http.StatusOK, gin.H{
+			"posts": posts,
 		})
-		return
-	}
-	log.Printf("INFO: RecommendPosts received %d post IDs from Mistral: %v", len(postIDs), postIDs)
+	*/
 
-	if len(postIDs) == 0 {
-		log.Printf("INFO: RecommendPosts returning empty list for user %d", userId)
-		c.JSON(http.StatusOK, gin.H{"posts": []models.Post{}})
-		return
-	}
+	requestID := newRequestID()
+	requestStartTime := time.Now()
+	log.Printf("INFO: [%s] Starting RecommendPosts (Qwen) for user_id: %d", requestID, userId)
 
-	// fetch posts by IDs in order
-	posts, err := getPostsByIDs(postIDs)
+	// --- Agent 1: profile the user (timed for analysis logger) ---
+	profilerStart := time.Now()
+	profile, err := runProfilerAgent(requestID, userId, user, follows, postActivity)
+	profilerLatencyMs := time.Since(profilerStart).Milliseconds()
 	if err != nil {
-		log.Printf("ERROR: RecommendPosts failed to fetch recommended posts for user %d: %v", userId, err)
+		log.Printf("ERROR: [%s] profiler agent failed: %v", requestID, err)
+		WriteRecommendationAnalysis(AnalysisContext{
+			RequestID: requestID, RequestTime: requestStartTime, UserID: userId,
+			User: user, Follows: follows, PostActivity: postActivity,
+			CandidatePosts: availablePosts, ProfilerLatencyMs: profilerLatencyMs,
+			PipelineError: "profiler agent failed: " + err.Error(),
+		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI profiler unavailable", "details": err.Error()})
+		return
+	}
+
+	// --- Agent 2: rank candidates against the profile (timed for analysis logger) ---
+	rankerStart := time.Now()
+	ranked, err := runRankerAgent(requestID, userId, user, profile, availablePosts)
+	rankerLatencyMs := time.Since(rankerStart).Milliseconds()
+	if err != nil {
+		log.Printf("ERROR: [%s] ranker agent failed: %v", requestID, err)
+		WriteRecommendationAnalysis(AnalysisContext{
+			RequestID: requestID, RequestTime: requestStartTime, UserID: userId,
+			User: user, Follows: follows, PostActivity: postActivity,
+			CandidatePosts: availablePosts, ProfilerOutput: profile,
+			ProfilerLatencyMs: profilerLatencyMs, RankerLatencyMs: rankerLatencyMs,
+			PipelineError: "ranker agent failed: " + err.Error(),
+		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI ranker unavailable", "details": err.Error()})
+		return
+	}
+
+	if len(ranked) == 0 {
+		WriteRecommendationAnalysis(AnalysisContext{
+			RequestID: requestID, RequestTime: requestStartTime, UserID: userId,
+			User: user, Follows: follows, PostActivity: postActivity,
+			CandidatePosts: availablePosts, ProfilerOutput: profile,
+			ProfilerLatencyMs: profilerLatencyMs, RankedResults: ranked,
+			RankerLatencyMs: rankerLatencyMs,
+		})
+		c.JSON(http.StatusOK, gin.H{"posts": []models.Post{}, "request_id": requestID})
+		return
+	}
+
+	// preserve agent-ranked order
+	ids := make([]int, 0, len(ranked))
+	for _, r := range ranked {
+		ids = append(ids, r.PostID)
+	}
+	posts, err := getPostsByIDs(ids)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch recommended posts"})
 		return
 	}
-	log.Printf("INFO: RecommendPosts successfully fetched %d posts for user %d", len(posts), userId)
+
+	// write one row per recommendation now; clicked/liked/etc get updated later
+	// by your existing analytics endpoints (see RecordRecommendationFeedback below)
+	insertRecommendationOutcomes(requestID, userId, ranked)
+
+	// ── fire-and-forget analysis log (completely standalone, safe to delete) ──
+	WriteRecommendationAnalysis(AnalysisContext{
+		RequestID:         requestID,
+		RequestTime:       requestStartTime,
+		UserID:            userId,
+		User:              user,
+		Follows:           follows,
+		PostActivity:      postActivity,
+		CandidatePosts:    availablePosts,
+		ProfilerOutput:    profile,
+		ProfilerLatencyMs: profilerLatencyMs,
+		RankedResults:     ranked,
+		RankerLatencyMs:   rankerLatencyMs,
+		FinalPosts:        posts,
+	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"posts": posts,
+		"posts":      posts,
+		"reasoning":  ranked, // post_id/reason/confidence, lets the frontend show "why this post"
+		"request_id": requestID,
 	})
 	log.Printf("INFO: Finished RecommendPosts for user_id: %d", userId)
 }

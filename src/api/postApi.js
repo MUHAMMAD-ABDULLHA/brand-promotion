@@ -1,6 +1,8 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+
+/*
 const fetchPosts = async ({ pageParam = 1 }, user_id) => {
   const res = await axios.get(
     `${API_BASE}/recommendation/posts/${user_id}?page=${pageParam}&limit=10`,
@@ -25,3 +27,28 @@ export const useInfinitePosts = (user_id) =>
     getNextPageParam: (lastPage) => lastPage?.nextPage ?? undefined,
     initialPageParam: 1,
   });
+*/
+
+const fetchPostsOneTime = async (user_id) => {
+  const res = await axios.get(`${API_BASE}/recommendation/posts/qwen/${user_id}`);
+  return res.data;
+};
+
+export const useInfinitePosts = (user_id) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["posts", user_id],
+    queryFn: () => fetchPostsOneTime(user_id),
+    enabled: !!user_id,
+    staleTime: 1 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  return {
+    data: data ? { pages: [data] } : undefined,
+    fetchNextPage: () => {},
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isLoading,
+    error,
+  };
+};

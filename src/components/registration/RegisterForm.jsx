@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { gsap } from 'gsap';
 import {
   registerUser,
   registerBrand,
@@ -72,45 +71,51 @@ const RegisterForm = () => {
 
   const selectedRole = role ? roleDetails[role] : null;
 
-  // GSAP Animations
+  // GSAP Animations - dynamically imported
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Form animation
-      gsap.fromTo(formRef.current,
-        { opacity: 0, x: -40 },
-        { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }
-      );
-
-      // Right panel animation
-      if (rightPanelRef.current) {
-        gsap.fromTo(rightPanelRef.current,
-          { opacity: 0, x: 40 },
-          { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", delay: 0.2 }
+    import("gsap").then(({ gsap }) => {
+      const ctx = gsap.context(() => {
+        // Form animation
+        gsap.fromTo(formRef.current,
+          { opacity: 0, x: -40 },
+          { opacity: 1, x: 0, duration: 0.7, ease: "power3.out" }
         );
-      }
-    }, containerRef);
 
-    return () => ctx.revert();
+        // Right panel animation
+        if (rightPanelRef.current) {
+          gsap.fromTo(rightPanelRef.current,
+            { opacity: 0, x: 40 },
+            { opacity: 1, x: 0, duration: 0.7, ease: "power3.out", delay: 0.2 }
+          );
+        }
+      }, containerRef);
+
+      return () => ctx.revert();
+    });
   }, []);
 
   // Animate role change
   useEffect(() => {
-    if (rightPanelRef.current) {
-      gsap.fromTo(rightPanelRef.current.querySelector('.role-content'),
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
-      );
-    }
+    import("gsap").then(({ gsap }) => {
+      if (rightPanelRef.current) {
+        gsap.fromTo(rightPanelRef.current.querySelector('.role-content'),
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+        );
+      }
+    });
   }, [role]);
 
   // Animate step change
   useEffect(() => {
-    if (formRef.current) {
-      gsap.fromTo(formRef.current.querySelector('.step-content'),
-        { opacity: 0, x: step === 1 ? -20 : 20 },
-        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
-      );
-    }
+    import("gsap").then(({ gsap }) => {
+      if (formRef.current) {
+        gsap.fromTo(formRef.current.querySelector('.step-content'),
+          { opacity: 0, x: step === 1 ? -20 : 20 },
+          { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+        );
+      }
+    });
   }, [step]);
 
   const handleCancel = () => navigate('/role-selection');

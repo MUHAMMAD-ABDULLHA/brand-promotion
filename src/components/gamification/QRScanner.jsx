@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
-import jsQR from "jsqr";
 import { validateCoupon } from "../../services/couponService";
 import {
     QrCode,
@@ -168,7 +167,7 @@ const QRScanner = () => {
     useEffect(() => {
         if (!scanning || !videoRef.current || !canvasRef.current) return;
 
-        const scanFrame = () => {
+        const scanFrame = async () => {
             if (!videoRef.current || !canvasRef.current || !scanning) return;
 
             const video = videoRef.current;
@@ -179,6 +178,9 @@ const QRScanner = () => {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Dynamic import - load jsqr only when scanning starts
+                const { default: jsQR } = await import("jsqr");
 
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {

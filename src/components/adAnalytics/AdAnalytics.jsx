@@ -6,7 +6,7 @@ import {
 } from "../../slice/analyticsSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Download, RefreshCw, AlertCircle, Users, Megaphone, BarChart3, TrendingUp, Target } from "lucide-react";
-import * as XLSX from "xlsx";
+
 
 import {
   ResponsiveContainer,
@@ -135,7 +135,9 @@ const AdAnalytics = ({ brandUserId }) => {
   // ------------------------------------------------------------------
   // 📥 EXCEL DOWNLOAD
   // ------------------------------------------------------------------
-  const handleDownloadExcel = () => {
+const handleDownloadExcel = async () => {
+    const { default: XLSX } = await import("xlsx");
+
     const dataToExport = detailedAnalytics?.analytics_data?.length > 0 
       ? detailedAnalytics.analytics_data 
       : analytics;

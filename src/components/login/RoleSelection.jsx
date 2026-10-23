@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { gsap } from "gsap";
 import {
   Users,
   Megaphone,
@@ -23,34 +22,36 @@ const RoleSelection = () => {
     navigate("/login-page");
   };
 
-  // GSAP Animations
+  // GSAP Animations - dynamically imported
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Header animation
-      gsap.fromTo(headerRef.current,
-        { opacity: 0, y: -30 },
-        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
-      );
-
-      // Cards stagger animation
-      const cards = cardsRef.current?.querySelectorAll('.role-select-card');
-      if (cards) {
-        gsap.fromTo(cards,
-          { opacity: 0, y: 50, scale: 0.95 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.6,
-            stagger: 0.15,
-            ease: "back.out(1.4)",
-            delay: 0.3
-          }
+    import("gsap").then(({ gsap }) => {
+      const ctx = gsap.context(() => {
+        // Header animation
+        gsap.fromTo(headerRef.current,
+          { opacity: 0, y: -30 },
+          { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
         );
-      }
-    }, containerRef);
 
-    return () => ctx.revert();
+        // Cards stagger animation
+        const cards = cardsRef.current?.querySelectorAll('.role-select-card');
+        if (cards) {
+          gsap.fromTo(cards,
+            { opacity: 0, y: 50, scale: 0.95 },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.6,
+              stagger: 0.15,
+              ease: "back.out(1.4)",
+              delay: 0.3
+            }
+          );
+        }
+      }, containerRef);
+
+      return () => ctx.revert();
+    });
   }, []);
 
   // Button hover animation

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { gsap } from "gsap";
 import { loginUser } from "../slice/userSlice";
 import { Zap, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
@@ -51,63 +50,65 @@ function LoginPage() {
     }
   }, [role, navigate]);
 
-  // GSAP Animations
+  // GSAP Animations - dynamically imported
   useEffect(() => {
     if (role === "") return;
 
-    const ctx = gsap.context(() => {
-      // Form slide in animation
-      gsap.fromTo(formRef.current,
-        { opacity: 0, x: -50 },
-        { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }
-      );
-
-      // Hanging cards animation - drop from above with swing
-      cardsRef.current.forEach((card, index) => {
-        if (!card) return;
-
-        const string = stringsRef.current[index];
-
-        // Initial drop animation
-        gsap.fromTo([string, card],
-          {
-            y: -300,
-            opacity: 0,
-          },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 1.2,
-            delay: 0.3 + (index * 0.2),
-            ease: "elastic.out(1, 0.5)",
-          }
+    import("gsap").then(({ gsap }) => {
+      const ctx = gsap.context(() => {
+        // Form slide in animation
+        gsap.fromTo(formRef.current,
+          { opacity: 0, x: -50 },
+          { opacity: 1, x: 0, duration: 0.8, ease: "power3.out" }
         );
 
-        // Continuous swinging animation
-        gsap.to(card, {
-          rotateZ: 5,
-          duration: 2 + (index * 0.3),
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          delay: 1.5 + (index * 0.2),
-        });
+        // Hanging cards animation - drop from above with swing
+        cardsRef.current.forEach((card, index) => {
+          if (!card) return;
 
-        // String also swings
-        if (string) {
-          gsap.to(string, {
-            rotateZ: 3,
+          const string = stringsRef.current[index];
+
+          // Initial drop animation
+          gsap.fromTo([string, card],
+            {
+              y: -300,
+              opacity: 0,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 1.2,
+              delay: 0.3 + (index * 0.2),
+              ease: "elastic.out(1, 0.5)",
+            }
+          );
+
+          // Continuous swinging animation
+          gsap.to(card, {
+            rotateZ: 5,
             duration: 2 + (index * 0.3),
             ease: "sine.inOut",
             repeat: -1,
             yoyo: true,
             delay: 1.5 + (index * 0.2),
           });
-        }
-      });
-    }, containerRef);
 
-    return () => ctx.revert();
+          // String also swings
+          if (string) {
+            gsap.to(string, {
+              rotateZ: 3,
+              duration: 2 + (index * 0.3),
+              ease: "sine.inOut",
+              repeat: -1,
+              yoyo: true,
+              delay: 1.5 + (index * 0.2),
+            });
+          }
+        });
+      }, containerRef);
+
+      return () => ctx.revert();
+    });
   }, [role]);
 
   // Handle Login
